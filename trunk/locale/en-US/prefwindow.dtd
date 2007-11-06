@@ -1,0 +1,6 @@
+<!ENTITY prefwindow.title "Readeroo preferences">
+<!ENTITY pane1.title "Readeroo preferences">
+<!ENTITY tagtoreadpref.label "Tag: new items">
+<!ENTITY tagtoreadpref.accesskey "T">
+<!ENTITY tagdonereadingpref.label "Tag: read items">
+<!ENTITY tagdonereadingpref.accesskey "T">
