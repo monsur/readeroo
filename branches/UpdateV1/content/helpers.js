@@ -13,7 +13,10 @@ var WebHelper = {
         url = WebHelper.createUrl(url, args);
 		var http = new XMLHttpRequest();
 		http.open("GET",url,true);
-		http.onreadystatechange=function(){if(http.readyState==4){callback(http.responseText);}};
+		http.onreadystatechange=function(){if(http.readyState==4) {
+            callback(http.responseText);
+            }
+        };
 		http.send(null);
 	},
 

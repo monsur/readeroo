@@ -60,14 +60,18 @@ var readeroo = {
 		DisplayControl.initialize('add');
 		DisplayControl.setProcessing(i18n.getString('processing'));
 		Preferences.load();
-		var urlItem = new UrlItem();
 		DocumentHelper.initialize();
+		
+		// initialize the item to add
+		var urlItem = new DeliciousItem();
 		urlItem.url = DocumentHelper.getUrl();
 		urlItem.description = DocumentHelper.getTitle();
 		if (urlItem.url == '') {
 			DisplayControl.setError(i18n.getString('error'));
 			return;
 		}
+		urlItem.tags.push(Preferences.tagtoread);
+
 		DeliciousQueue.add(urlItem);
 	},
 
@@ -208,48 +212,65 @@ var DeliciousQueue = {
 	},
 
 	add: function(urlItem) {
-        LOG('this is a test');
-//		urlItem.tags.push(Preferences.tagtoread);
-//		DeliciousQueue.currentItem = urlItem;
-//		var sendUrl = 'https://api.del.icio.us/v1/posts/add';
-//		sendUrl = sendUrl + '?url=' + escape(urlItem.url);
-//		sendUrl = sendUrl + '&description=' + escape(urlItem.description);
-//		sendUrl = sendUrl + '&tags=' + escape(urlItem.tags.join(' '));
-//		WebHelper.send(sendUrl, null, DeliciousQueue.addCallback);
+
+        // first check to see if the url already exists
+        // in delicious
+        DeliciousApi.get({url: urlItem.url},
+        
+            // callback function for the Delicious API "get" call
+            // if the bookmark already exists, copying the old 
+            // values over to the new item before saving it to 
+            // delicious.
+            function(items) { 
+
+                // if the url already exists
+                if (items.length > 0) {
+
+                    var oldItem = items[0];
+                    
+                    // copy all the old values over
+                    urlItem.description = oldItem.description;
+                    urlItem.notes = oldItem.notes;
+                    
+                    // copy all the tags over (except for the "toread" 
+                    // and "donereading" tags)
+                    for (var i = 0; i < oldItem.tags.length; i++) {
+                        var currTag = oldItem.tags[i];
+                        if ((currTag != Preferences.tagtoread) &&
+                            (currTag != Preferences.tagdonereading))
+                            urlItem.tags.push(oldItem.tags[i]);
+                    }
+                }
+                
+                // call the actual add function
+                DeliciousQueue.add2(urlItem);
+            }
+        );
 	},
 	
+	// PRIVATE FUNCTION
+	// once the item has been checked for duplicates,
+	// add it to delicious
 	add2: function(urlItem) {
+
+        DeliciousQueue.currentItem = urlItem;
+        DeliciousApi.add(urlItem, 
+        
+            // callback from "add" api call.
+            // if add is successful, revert icon back to normal
+            // otherwise show error icon
+            function(success) {
+                if (success) {
+                    // do stuff for success
+                    DisplayControl.setNormal(i18n.getString('add'));
+                } else {
+                    // failure
+                    DisplayControl.setError(i18n.getString('error'));
+                }
+            }
+        );
 	},
-	
-	addCallback: function(responseText) {
-		
-		function parseResults(responseText) {
-			var parser = new DOMParser();
-			var doc = parser.parseFromString(responseText, 'text/xml');
-			if (!doc.firstChild) {
-				return false;
-			}
-			var code = doc.firstChild.attributes.getNamedItem('code');
-			if (!code) {
-				return false;
-			}
-			if (code.nodeValue == 'done') {
-//				DeliciousQueue.urlCache.push(DeliciousQueue.currentItem);
-				return true;
-			}
-			return false;
-		}
-		
-		var success = parseResults(responseText);
-		if (success) {
-			// do stuff for success
-			DisplayControl.setNormal(i18n.getString('add'));
-		} else {
-			// failure
-			DisplayControl.setError(i18n.getString('error'));
-		}
-	},
-	
+
 	read: function() {
 		if ((DeliciousQueue.urlCache.length == 0) || (ReaderooCache.refresh())) {
 			var sendUrl = 'https://api.del.icio.us/v1/posts/recent?tag=' + escape(Preferences.tagtoread);
