@@ -1,13 +1,6 @@
 
 var processing = false;
 
-function UrlItem() {
-	this.url = '';
-	this.description = '';
-	this.notes = '';
-	this.tags = new Array();
-}
-
 var i18n = {
 
 	strings: null,
@@ -200,20 +193,10 @@ var DocumentHelper = {
 	},
 	
 	redirect: function(url) {
-		this.document.location.href = url;
+		this.document.location.url = url;
 	}
 };
 
-var WebHelper = {
-	send: function(url,request,callback) {
-		var http = new XMLHttpRequest();
-		var mode = request?"POST":"GET";
-		http.open(mode,url,true);
-		if(mode=="POST"){http.setRequestHeader('Content-Type','application/x-www-form-urlencoded');}
-		http.onreadystatechange=function(){if(http.readyState==4){callback(http.responseText);}};
-		http.send(request);
-	}
-};
 
 var DeliciousQueue = {
 
@@ -225,13 +208,17 @@ var DeliciousQueue = {
 	},
 
 	add: function(urlItem) {
-		urlItem.tags.push(Preferences.tagtoread);
-		DeliciousQueue.currentItem = urlItem;
-		var sendUrl = 'https://api.del.icio.us/v1/posts/add';
-		sendUrl = sendUrl + '?url=' + escape(urlItem.url);
-		sendUrl = sendUrl + '&description=' + escape(urlItem.description);
-		sendUrl = sendUrl + '&tags=' + escape(urlItem.tags.join(' '));
-		WebHelper.send(sendUrl, null, DeliciousQueue.addCallback);
+        LOG('this is a test');
+//		urlItem.tags.push(Preferences.tagtoread);
+//		DeliciousQueue.currentItem = urlItem;
+//		var sendUrl = 'https://api.del.icio.us/v1/posts/add';
+//		sendUrl = sendUrl + '?url=' + escape(urlItem.url);
+//		sendUrl = sendUrl + '&description=' + escape(urlItem.description);
+//		sendUrl = sendUrl + '&tags=' + escape(urlItem.tags.join(' '));
+//		WebHelper.send(sendUrl, null, DeliciousQueue.addCallback);
+	},
+	
+	add2: function(urlItem) {
 	},
 	
 	addCallback: function(responseText) {

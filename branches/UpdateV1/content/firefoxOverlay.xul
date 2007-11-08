@@ -3,6 +3,11 @@
 <!DOCTYPE overlay SYSTEM "chrome://readeroo/locale/readeroo.dtd">
 <overlay id="readeroo-overlay"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/x-javascript" src="debug.js"/>
+  <script type="application/x-javascript" src="urlitem.js"/>
+  <script type="application/x-javascript" src="deliciousitem.js"/>
+  <script type="application/x-javascript" src="helpers.js"/>
+  <script type="application/x-javascript" src="deliciousapi.js"/>
   <script type="application/x-javascript" src="overlay.js"/>
   <stringbundleset id="stringbundleset">
     <stringbundle id="readeroo-strings" src="chrome://readeroo/locale/readeroo.properties"/>
