@@ -243,34 +243,26 @@ var DeliciousQueue = {
                 }
                 
                 // call the actual add function
-                DeliciousQueue.add2(urlItem);
+                DeliciousApi.add(urlItem, 
+                
+                    // callback from "add" api call.
+                    // if add is successful, revert icon back to normal
+                    // otherwise show error icon
+                    // we are so far deep inside the rabbit hole right now!
+                    function(success) {
+                        if (success) {
+                            // do stuff for success
+                            DisplayControl.setNormal(i18n.getString('add'));
+                        } else {
+                            // failure
+                            DisplayControl.setError(i18n.getString('error'));
+                        }
+                    }
+                );
             }
         );
 	},
 	
-	// PRIVATE FUNCTION
-	// once the item has been checked for duplicates,
-	// add it to delicious
-	add2: function(urlItem) {
-
-        DeliciousQueue.currentItem = urlItem;
-        DeliciousApi.add(urlItem, 
-        
-            // callback from "add" api call.
-            // if add is successful, revert icon back to normal
-            // otherwise show error icon
-            function(success) {
-                if (success) {
-                    // do stuff for success
-                    DisplayControl.setNormal(i18n.getString('add'));
-                } else {
-                    // failure
-                    DisplayControl.setError(i18n.getString('error'));
-                }
-            }
-        );
-	},
-
 	read: function() {
 		if ((DeliciousQueue.urlCache.length == 0) || (ReaderooCache.refresh())) {
 			var sendUrl = 'https://api.del.icio.us/v1/posts/recent?tag=' + escape(Preferences.tagtoread);
