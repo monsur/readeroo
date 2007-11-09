@@ -212,6 +212,14 @@ var DeliciousQueue = {
 		DeliciousQueue.urlCache = new Array();
 	},
 
+	clear: function() {
+		DeliciousQueue.urlCache = new Array();
+		DeliciousQueue.currentItem = null;
+		DisplayControl.initialize('read');
+		DisplayControl.setNormal(i18n.getString('readtooltip'));
+		return false;
+	},
+
 	add: function(urlItem) {
 
         // first check to see if the url already exists
