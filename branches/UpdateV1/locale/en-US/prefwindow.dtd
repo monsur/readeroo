@@ -12,3 +12,6 @@
 <!ENTITY shareditemprefpublic.label "public">
 <!ENTITY shareditemprefprivate.label "private">
 <!ENTITY clearcachebutton.label "Clear Readeroo Cache">
+<!ENTITY sortitemscaption.label "Sort items">
+<!ENTITY sortitemspreffilo.label "Latest item first">
+<!ENTITY sortitemspreffifo.label "Latest item last">

@@ -8,9 +8,17 @@
 		<preference id="tagdonereading" name="extensions.readeroo.tagdonereading" type="string"/>
 		<preference id="deleteitem" name="extensions.readeroo.deleteitem" type="bool"/>
 		<preference id="shareditem" name="extensions.readeroo.shareditem" type="bool"/>
+		<preference id="sortitems" name="extensions.readeroo.sortitems" type="string" />
     </preferences>
     <label accesskey="&tagtoreadpref.accesskey;" control="tagtoreadpref">&tagtoreadpref.label;</label><textbox id="tagtoreadpref" preference="tagtoread"/>
 	<label accesskey="&tagdonereadingpref.accesskey;" control="tagdonereadingpref">&tagdonereadingpref.label;</label><textbox id="tagdonereadingpref" preference="tagdonereading"/>
+	<groupbox>
+		<caption label="&sortitemscaption.label;" />
+		<radiogroup preference="sortitems">
+			<radio id="sortitemspreffilo" value="filo" label="&sortitemspreffilo.label;" />
+			<radio id="sortitemspreffifo" value="fifo" label="&sortitemspreffifo.label;" />
+		</radiogroup>
+	</groupbox>
 	<groupbox>
 		<caption label="&deleteitemcaption.label;" />
 		<radiogroup preference="deleteitem">

@@ -19,6 +19,7 @@ var Preferences = {
 	tagdonereading: '',
 	shareditem: true,
 	deleteitem: false,
+	sortitems: '',
 	prefs: null,
 	
 	load: function() {
@@ -31,6 +32,9 @@ var Preferences = {
 		Preferences.tagdonereading = Preferences.prefs.getCharPref('tagdonereading');
 		Preferences.deleteitem = Preferences.prefs.getBoolPref("deleteitem");
 		Preferences.shareditem = Preferences.prefs.getBoolPref("shareditem");
+		if (Preferences.prefs.getCharPref('sortitems') == '')
+			Preferences.prefs.setCharPref('sortitems', 'filo');
+		Preferences.sortitems = Preferences.prefs.getCharPref("sortitems");
 	}
 };
 
@@ -275,8 +279,16 @@ var DeliciousQueue = {
 	read: function() {
 		// if the cache is empty, or its time to refresh the cache              
 		if ((DeliciousQueue.urlCache.length == 0) || (ReaderooCache.refresh())) {
-         DeliciousApi.recent({tag : Preferences.tagtoread}, 
+         DeliciousApi.all({tag : Preferences.tagtoread, count : 100}, 
                 function(items) {
+					if (Preferences.sortitems == "fifo") {
+						items.sort( function(a, b) {
+								if (a.time < b.time) return -1;
+								if (a.time > b.time) return 1;
+								return 0;
+							}
+						);
+					}
                     DeliciousQueue.urlCache = items;
                     DeliciousQueue.readItemFromCache();
                 }

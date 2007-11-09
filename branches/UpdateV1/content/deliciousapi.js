@@ -46,6 +46,19 @@ var DeliciousApi = {
         function parseTags(tagsStr) {
             return tagsStr.split(" ");
         }
+
+		// helper function to parse delicious date
+		function parseTime(timeStr) {
+			var pattern = /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z/
+			var result = timeStr.match(pattern);
+			return new Date(result[1],
+							result[2],
+							result[3],
+							result[4],
+							result[5],
+							result[6]
+						   );
+		}
 		
         var items = new Array();
         var parser = new DOMParser();   // create a parser object
@@ -62,6 +75,7 @@ var DeliciousApi = {
             if (attributes.getNamedItem('extended')) 
                 urlItem.notes = attributes.getNamedItem('extended').nodeValue;
             urlItem.tags = parseTags(attributes.getNamedItem('tag').nodeValue);
+			urlItem.time = parseTime(attributes.getNamedItem('time').nodeValue);
             items.push(urlItem);
         }
             
