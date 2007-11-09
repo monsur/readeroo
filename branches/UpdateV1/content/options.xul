@@ -2,16 +2,29 @@
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
 <!DOCTYPE prefwindow SYSTEM "chrome://readeroo/locale/prefwindow.dtd">
 <prefwindow id="readerooPreferences" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" title="&prefwindow.title;">
-  <prefpane id="pane1" label="&pane1.title;">
-    <preferences>
+  <prefpane id="pane1" label="&pane1.title;" helpURL="http://www.monsur.com/projects/readeroo/help.htm" >
+  
+	<preferences>
 		<preference id="tagtoread" name="extensions.readeroo.tagtoread" type="string"/>
 		<preference id="tagdonereading" name="extensions.readeroo.tagdonereading" type="string"/>
 		<preference id="deleteitem" name="extensions.readeroo.deleteitem" type="bool"/>
 		<preference id="shareditem" name="extensions.readeroo.shareditem" type="bool"/>
 		<preference id="sortitems" name="extensions.readeroo.sortitems" type="string" />
-    </preferences>
-    <label accesskey="&tagtoreadpref.accesskey;" control="tagtoreadpref">&tagtoreadpref.label;</label><textbox id="tagtoreadpref" preference="tagtoread"/>
-	<label accesskey="&tagdonereadingpref.accesskey;" control="tagdonereadingpref">&tagdonereadingpref.label;</label><textbox id="tagdonereadingpref" preference="tagdonereading"/>
+	</preferences>
+
+	<grid flex="1">
+		<columns>
+			<column flex="1" />
+			<column flex="1" />
+		</columns>
+
+	<rows>
+	<row>
+	<groupbox>
+		<caption label="&tagcaption.label;" />
+		<label accesskey="&tagtoreadpref.accesskey;" control="tagtoreadpref">&tagtoreadpref.label;</label><textbox id="tagtoreadpref" preference="tagtoread"/>
+		<label accesskey="&tagdonereadingpref.accesskey;" control="tagdonereadingpref">&tagdonereadingpref.label;</label><textbox id="tagdonereadingpref" preference="tagdonereading"/>
+	</groupbox>
 	<groupbox>
 		<caption label="&sortitemscaption.label;" />
 		<radiogroup preference="sortitems">
@@ -19,6 +32,8 @@
 			<radio id="sortitemspreffifo" value="fifo" label="&sortitemspreffifo.label;" />
 		</radiogroup>
 	</groupbox>
+	</row>
+	<row>
 	<groupbox>
 		<caption label="&deleteitemcaption.label;" />
 		<radiogroup preference="deleteitem">
@@ -33,5 +48,8 @@
 			<radio id="shareditemprefprivate" label="&shareditemprefprivate.label;" value="false" />
 		</radiogroup>
 	</groupbox>
+</row>
+</rows>
+	</grid>
   </prefpane>
 </prefwindow>
