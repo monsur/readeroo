@@ -264,35 +264,17 @@ var DeliciousQueue = {
 	},
 	
 	read: function() {
+		// if the cache is empty, or its time to refresh the cache              
 		if ((DeliciousQueue.urlCache.length == 0) || (ReaderooCache.refresh())) {
-			var sendUrl = 'https://api.del.icio.us/v1/posts/recent?tag=' + escape(Preferences.tagtoread);
-			WebHelper.send(sendUrl, null, DeliciousQueue.readCallback);
+         DeliciousApi.recent({tag : Preferences.tagtoread}, 
+                function(items) {
+                    DeliciousQueue.urlCache = items;
+                    DeliciousQueue.readItemFromCache();
+                }
+            );
 		} else {
 			DeliciousQueue.readItemFromCache();
 		}
-	},
-	
-	readCallback: function(responseText) {
-		
-		function parseTags(tagsStr) {
-			return tagsStr.split(" ");
-		}
-		
-		DeliciousQueue.urlCache = new Array();
-		var parser = new DOMParser();
-		var doc = parser.parseFromString(responseText, 'text/xml');
-		var posts = doc.getElementsByTagName('post');
-		for (var i = 0; i < posts.length; i++) {
-			var attributes = posts.item(i).attributes;
-			var urlItem = new UrlItem();
-			urlItem.url = attributes.getNamedItem('href').nodeValue;
-			urlItem.description = attributes.getNamedItem('description').nodeValue;
-			if (attributes.getNamedItem('extended')) 
-				urlItem.notes = attributes.getNamedItem('extended').nodeValue;
-			urlItem.tags = parseTags(attributes.getNamedItem('tag').nodeValue);
-			DeliciousQueue.urlCache.push(urlItem);
-		}
-		DeliciousQueue.readItemFromCache();
 	},
 	
 	readItemFromCache: function() {
@@ -304,34 +286,21 @@ var DeliciousQueue = {
 		DeliciousQueue.markRead();
 	},
 	
-	markRead: function() {
+	markRead: function() {	
+        for (var i = 0; i < DeliciousQueue.currentItem.tags.length; i++) {
+            if (DeliciousQueue.currentItem.tags[i] == Preferences.tagtoread) {
+                DeliciousQueue.currentItem.tags[i] = Preferences.tagdonereading;
+            }
+        }
 	
-		function getTags(tagsArray) {
-			var tagsStr = '';
-			for (var i = 0; i < tagsArray.length; i++) {
-				var tag = tagsArray[i];
-				if (tag == Preferences.tagtoread) {
-					tag = Preferences.tagdonereading;
-				}
-				if (tagsStr != '') {
-					tagsStr = tagsStr + ' ';
-				}
-				tagsStr = tagsStr + tag;
-			}
-			return tagsStr;
-		}
-		
-		var url = 'https://api.del.icio.us/v1/posts/add?';
-		url = url + 'url=' + escape(DeliciousQueue.currentItem.url);
-		url = url + '&description=' + escape(DeliciousQueue.currentItem.description);
-		url = url + '&extended=' + escape(DeliciousQueue.currentItem.notes);
-		url = url + '&tags=' + escape(getTags(DeliciousQueue.currentItem.tags));
-		WebHelper.send(url, null, DeliciousQueue.markReadCallback);
+        DeliciousApi.add(DeliciousQueue.currentItem, 
+				         DeliciousQueue.markReadCallback);
 	},
 	
 	markReadCallback: function(responseText) {
-		DocumentHelper.initialize();
-		DocumentHelper.redirect(DeliciousQueue.currentItem.url);
+//		DocumentHelper.initialize();
+//		DocumentHelper.redirect(DeliciousQueue.currentItem.url);
+		window._content.document.location = DeliciousQueue.currentItem.url;
 		var tooltip = '';
 		var length = DeliciousQueue.urlCache.length;
 		if (length == 0)
