@@ -17,6 +17,8 @@ var i18n = {
 var Preferences = {
 	tagtoread: '',
 	tagdonereading: '',
+	shareditem: true,
+	deleteitem: false,
 	prefs: null,
 	
 	load: function() {
@@ -25,11 +27,10 @@ var Preferences = {
 		if (Preferences.prefs.getCharPref('tagtoread') == '') {
 			Preferences.prefs.setCharPref('tagtoread', 'toread');
 		}
-//		if (Preferences.prefs.getCharPref('tagdonereading') == '') {
-//			Preferences.prefs.setCharPref('tagdonereading', 'donereading');
-//		}
 		Preferences.tagtoread = Preferences.prefs.getCharPref('tagtoread');
 		Preferences.tagdonereading = Preferences.prefs.getCharPref('tagdonereading');
+		Preferences.deleteitem = Preferences.prefs.getBoolPref("deleteitem");
+		Preferences.shareditem = Preferences.prefs.getBoolPref("shareditem");
 	}
 };
 
@@ -243,7 +244,7 @@ var DeliciousQueue = {
                 }
                 
                 // call the actual add function
-                DeliciousApi.add(urlItem, 
+                DeliciousApi.add(urlItem, Preferences.shareditem, 
                 
                     // callback from "add" api call.
                     // if add is successful, revert icon back to normal
@@ -286,15 +287,20 @@ var DeliciousQueue = {
 		DeliciousQueue.markRead();
 	},
 	
-	markRead: function() {	
-        for (var i = 0; i < DeliciousQueue.currentItem.tags.length; i++) {
-            if (DeliciousQueue.currentItem.tags[i] == Preferences.tagtoread) {
-                DeliciousQueue.currentItem.tags[i] = Preferences.tagdonereading;
-            }
-        }
-	
-        DeliciousApi.add(DeliciousQueue.currentItem, 
-				         DeliciousQueue.markReadCallback);
+	markRead: function() {
+		if (Preferences.deleteitem) {
+			DeliciousApi.delete(DeliciousQueue.currentItem.url,
+								DeliciousQueue.markReadCallback);
+		} else {
+			for (var i = 0; i < DeliciousQueue.currentItem.tags.length; i++) {
+				if (DeliciousQueue.currentItem.tags[i] == Preferences.tagtoread) {
+					DeliciousQueue.currentItem.tags[i] = Preferences.tagdonereading;
+				}
+			}
+		
+			DeliciousApi.add(DeliciousQueue.currentItem, Preferences.shareditem, 
+							 DeliciousQueue.markReadCallback);
+		}
 	},
 	
 	markReadCallback: function(responseText) {

@@ -116,7 +116,7 @@ var DeliciousApi = {
                               getCallback, callback);    
       },
       
-    add: function(item, callback) {
+    add: function(item, shared, callback) {
     
         function getCallback(responseText) {
 			var parser = new DOMParser();
@@ -135,7 +135,9 @@ var DeliciousApi = {
         }
         
         var args = item.getArgs();
-        
+		if (shared == false)
+			args["shared"] = "no";
+
         // send the web request
         DeliciousApi.send('https://api.del.icio.us/v1/posts/add', args,
                           getCallback, callback);    

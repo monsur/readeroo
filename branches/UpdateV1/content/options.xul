@@ -4,10 +4,26 @@
 <prefwindow id="readerooPreferences" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" title="&prefwindow.title;">
   <prefpane id="pane1" label="&pane1.title;">
     <preferences>
-      <preference id="tagtoread" name="extensions.readeroo.tagtoread" type="string"/>
-      <preference id="tagdonereading" name="extensions.readeroo.tagdonereading" type="string"/>
+		<preference id="tagtoread" name="extensions.readeroo.tagtoread" type="string"/>
+		<preference id="tagdonereading" name="extensions.readeroo.tagdonereading" type="string"/>
+		<preference id="deleteitem" name="extensions.readeroo.deleteitem" type="bool"/>
+		<preference id="shareditem" name="extensions.readeroo.shareditem" type="bool"/>
     </preferences>
     <label accesskey="&tagtoreadpref.accesskey;" control="tagtoreadpref">&tagtoreadpref.label;</label><textbox id="tagtoreadpref" preference="tagtoread"/>
-    <label accesskey="&tagdonereadingpref.accesskey;" control="tagdonereadingpref">&tagdonereadingpref.label;</label><textbox id="tagdonereadingpref" preference="tagdonereading"/>
+	<label accesskey="&tagdonereadingpref.accesskey;" control="tagdonereadingpref">&tagdonereadingpref.label;</label><textbox id="tagdonereadingpref" preference="tagdonereading"/>
+	<groupbox>
+		<caption label="&deleteitemcaption.label;" />
+		<radiogroup preference="deleteitem">
+			<radio id="deleteitempreftag" label="&deleteitempreftag.label;" value="false" />
+			<radio id="deleteitemprefdelete" label="&deleteitemprefdelete.label;" value="true" />
+		</radiogroup>
+	</groupbox>
+	<groupbox>
+		<caption label="&shareditemcaption.label;" />
+		<radiogroup preference="shareditem">
+			<radio id="shareditemprefpublic" label="&shareditemprefpublic.label;" value="true" />
+			<radio id="shareditemprefprivate" label="&shareditemprefprivate.label;" value="false" />
+		</radiogroup>
+	</groupbox>
   </prefpane>
 </prefwindow>
