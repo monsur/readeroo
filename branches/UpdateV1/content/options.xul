@@ -3,7 +3,7 @@
 <!DOCTYPE prefwindow SYSTEM "chrome://readeroo/locale/prefwindow.dtd">
 <prefwindow id="readerooPreferences" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" 
 	title="&prefwindow.title;" buttons="accept, cancel">
-  <prefpane id="pane1" label="&pane1.title;" helpURL="http://www.monsur.com/projects/readeroo/help.htm" >
+  <prefpane id="pane1" label="&pane1.title;" helpURI="http://www.monsur.com/projects/readeroo/help.htm" >
   
 	<preferences>
 		<preference id="tagtoread" name="extensions.readeroo.tagtoread" type="string"/>
