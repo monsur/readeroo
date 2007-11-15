@@ -1,13 +1,6 @@
 
 var processing = false;
 
-function UrlItem() {
-	this.url = '';
-	this.description = '';
-	this.notes = '';
-	this.tags = new Array();
-}
-
 var i18n = {
 
 	strings: null,
@@ -24,6 +17,9 @@ var i18n = {
 var Preferences = {
 	tagtoread: '',
 	tagdonereading: '',
+	shareditem: true,
+	deleteitem: false,
+	sortitems: '',
 	prefs: null,
 	
 	load: function() {
@@ -32,11 +28,13 @@ var Preferences = {
 		if (Preferences.prefs.getCharPref('tagtoread') == '') {
 			Preferences.prefs.setCharPref('tagtoread', 'toread');
 		}
-//		if (Preferences.prefs.getCharPref('tagdonereading') == '') {
-//			Preferences.prefs.setCharPref('tagdonereading', 'donereading');
-//		}
 		Preferences.tagtoread = Preferences.prefs.getCharPref('tagtoread');
 		Preferences.tagdonereading = Preferences.prefs.getCharPref('tagdonereading');
+		Preferences.deleteitem = Preferences.prefs.getBoolPref("deleteitem");
+		Preferences.shareditem = Preferences.prefs.getBoolPref("shareditem");
+		if (Preferences.prefs.getCharPref('sortitems') == '')
+			Preferences.prefs.setCharPref('sortitems', 'filo');
+		Preferences.sortitems = Preferences.prefs.getCharPref("sortitems");
 	}
 };
 
@@ -67,14 +65,18 @@ var readeroo = {
 		DisplayControl.initialize('add');
 		DisplayControl.setProcessing(i18n.getString('processing'));
 		Preferences.load();
-		var urlItem = new UrlItem();
 		DocumentHelper.initialize();
+		
+		// initialize the item to add
+		var urlItem = new DeliciousItem();
 		urlItem.url = DocumentHelper.getUrl();
 		urlItem.description = DocumentHelper.getTitle();
 		if (urlItem.url == '') {
 			DisplayControl.setError(i18n.getString('error'));
 			return;
 		}
+		urlItem.tags.push(Preferences.tagtoread);
+
 		DeliciousQueue.add(urlItem);
 	},
 
@@ -200,20 +202,10 @@ var DocumentHelper = {
 	},
 	
 	redirect: function(url) {
-		this.document.location.href = url;
+		this.document.location.url = url;
 	}
 };
 
-var WebHelper = {
-	send: function(url,request,callback) {
-		var http = new XMLHttpRequest();
-		var mode = request?"POST":"GET";
-		http.open(mode,url,true);
-		if(mode=="POST"){http.setRequestHeader('Content-Type','application/x-www-form-urlencoded');}
-		http.onreadystatechange=function(){if(http.readyState==4){callback(http.responseText);}};
-		http.send(request);
-	}
-};
 
 var DeliciousQueue = {
 
@@ -224,75 +216,86 @@ var DeliciousQueue = {
 		DeliciousQueue.urlCache = new Array();
 	},
 
-	add: function(urlItem) {
-		urlItem.tags.push(Preferences.tagtoread);
-		DeliciousQueue.currentItem = urlItem;
-		var sendUrl = 'https://api.del.icio.us/v1/posts/add';
-		sendUrl = sendUrl + '?url=' + escape(urlItem.url);
-		sendUrl = sendUrl + '&description=' + escape(urlItem.description);
-		sendUrl = sendUrl + '&tags=' + escape(urlItem.tags.join(' '));
-		WebHelper.send(sendUrl, null, DeliciousQueue.addCallback);
+	clear: function() {
+		DeliciousQueue.urlCache = new Array();
+		DeliciousQueue.currentItem = null;
+		DisplayControl.initialize('read');
+		DisplayControl.setNormal(i18n.getString('readtooltip'));
+		return false;
 	},
-	
-	addCallback: function(responseText) {
-		
-		function parseResults(responseText) {
-			var parser = new DOMParser();
-			var doc = parser.parseFromString(responseText, 'text/xml');
-			if (!doc.firstChild) {
-				return false;
-			}
-			var code = doc.firstChild.attributes.getNamedItem('code');
-			if (!code) {
-				return false;
-			}
-			if (code.nodeValue == 'done') {
-//				DeliciousQueue.urlCache.push(DeliciousQueue.currentItem);
-				return true;
-			}
-			return false;
-		}
-		
-		var success = parseResults(responseText);
-		if (success) {
-			// do stuff for success
-			DisplayControl.setNormal(i18n.getString('add'));
-		} else {
-			// failure
-			DisplayControl.setError(i18n.getString('error'));
-		}
+
+	add: function(urlItem) {
+
+        // first check to see if the url already exists
+        // in delicious
+        DeliciousApi.get({url: urlItem.url},
+        
+            // callback function for the Delicious API "get" call
+            // if the bookmark already exists, copying the old 
+            // values over to the new item before saving it to 
+            // delicious.
+            function(items) { 
+
+                // if the url already exists
+                if (items.length > 0) {
+
+                    var oldItem = items[0];
+                    
+                    // copy all the old values over
+                    urlItem.description = oldItem.description;
+                    urlItem.notes = oldItem.notes;
+                    
+                    // copy all the tags over (except for the "toread" 
+                    // and "donereading" tags)
+                    for (var i = 0; i < oldItem.tags.length; i++) {
+                        var currTag = oldItem.tags[i];
+                        if ((currTag != Preferences.tagtoread) &&
+                            (currTag != Preferences.tagdonereading))
+                            urlItem.tags.push(oldItem.tags[i]);
+                    }
+                }
+                
+                // call the actual add function
+                DeliciousApi.add(urlItem, Preferences.shareditem, 
+                
+                    // callback from "add" api call.
+                    // if add is successful, revert icon back to normal
+                    // otherwise show error icon
+                    // we are so far deep inside the rabbit hole right now!
+                    function(success) {
+                        if (success) {
+                            // do stuff for success
+                            DisplayControl.setNormal(i18n.getString('add'));
+                        } else {
+                            // failure
+                            DisplayControl.setError(i18n.getString('error'));
+                        }
+                    }
+                );
+            }
+        );
 	},
 	
 	read: function() {
+		// if the cache is empty, or its time to refresh the cache              
 		if ((DeliciousQueue.urlCache.length == 0) || (ReaderooCache.refresh())) {
-			var sendUrl = 'https://api.del.icio.us/v1/posts/recent?tag=' + escape(Preferences.tagtoread);
-			WebHelper.send(sendUrl, null, DeliciousQueue.readCallback);
+         DeliciousApi.all({tag : Preferences.tagtoread, count : 100}, 
+                function(items) {
+					if (Preferences.sortitems == "fifo") {
+						items.sort( function(a, b) {
+								if (a.time < b.time) return -1;
+								if (a.time > b.time) return 1;
+								return 0;
+							}
+						);
+					}
+                    DeliciousQueue.urlCache = items;
+                    DeliciousQueue.readItemFromCache();
+                }
+            );
 		} else {
 			DeliciousQueue.readItemFromCache();
 		}
-	},
-	
-	readCallback: function(responseText) {
-		
-		function parseTags(tagsStr) {
-			return tagsStr.split(" ");
-		}
-		
-		DeliciousQueue.urlCache = new Array();
-		var parser = new DOMParser();
-		var doc = parser.parseFromString(responseText, 'text/xml');
-		var posts = doc.getElementsByTagName('post');
-		for (var i = 0; i < posts.length; i++) {
-			var attributes = posts.item(i).attributes;
-			var urlItem = new UrlItem();
-			urlItem.url = attributes.getNamedItem('href').nodeValue;
-			urlItem.description = attributes.getNamedItem('description').nodeValue;
-			if (attributes.getNamedItem('extended')) 
-				urlItem.notes = attributes.getNamedItem('extended').nodeValue;
-			urlItem.tags = parseTags(attributes.getNamedItem('tag').nodeValue);
-			DeliciousQueue.urlCache.push(urlItem);
-		}
-		DeliciousQueue.readItemFromCache();
 	},
 	
 	readItemFromCache: function() {
@@ -305,33 +308,25 @@ var DeliciousQueue = {
 	},
 	
 	markRead: function() {
-	
-		function getTags(tagsArray) {
-			var tagsStr = '';
-			for (var i = 0; i < tagsArray.length; i++) {
-				var tag = tagsArray[i];
-				if (tag == Preferences.tagtoread) {
-					tag = Preferences.tagdonereading;
+		if (Preferences.deleteitem) {
+			DeliciousApi.delete(DeliciousQueue.currentItem.url,
+								DeliciousQueue.markReadCallback);
+		} else {
+			for (var i = 0; i < DeliciousQueue.currentItem.tags.length; i++) {
+				if (DeliciousQueue.currentItem.tags[i] == Preferences.tagtoread) {
+					DeliciousQueue.currentItem.tags[i] = Preferences.tagdonereading;
 				}
-				if (tagsStr != '') {
-					tagsStr = tagsStr + ' ';
-				}
-				tagsStr = tagsStr + tag;
 			}
-			return tagsStr;
-		}
 		
-		var url = 'https://api.del.icio.us/v1/posts/add?';
-		url = url + 'url=' + escape(DeliciousQueue.currentItem.url);
-		url = url + '&description=' + escape(DeliciousQueue.currentItem.description);
-		url = url + '&extended=' + escape(DeliciousQueue.currentItem.notes);
-		url = url + '&tags=' + escape(getTags(DeliciousQueue.currentItem.tags));
-		WebHelper.send(url, null, DeliciousQueue.markReadCallback);
+			DeliciousApi.add(DeliciousQueue.currentItem, Preferences.shareditem, 
+							 DeliciousQueue.markReadCallback);
+		}
 	},
 	
 	markReadCallback: function(responseText) {
-		DocumentHelper.initialize();
-		DocumentHelper.redirect(DeliciousQueue.currentItem.url);
+//		DocumentHelper.initialize();
+//		DocumentHelper.redirect(DeliciousQueue.currentItem.url);
+		window._content.document.location = DeliciousQueue.currentItem.url;
 		var tooltip = '';
 		var length = DeliciousQueue.urlCache.length;
 		if (length == 0)
