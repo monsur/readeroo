@@ -281,6 +281,7 @@ var DeliciousQueue = {
 		if ((DeliciousQueue.urlCache.length == 0) || (ReaderooCache.refresh())) {
          DeliciousApi.all({tag : Preferences.tagtoread, count : 100}, 
                 function(items) {
+					// TODO: Refactor this out
 					if (Preferences.sortitems == "fifo") {
 						items.sort( function(a, b) {
 								if (a.time < b.time) return -1;
@@ -288,6 +289,14 @@ var DeliciousQueue = {
 								return 0;
 							}
 						);
+					}
+					if (Preferences.sortitems == "random") {
+						for (var i = 0; i < items.length; i++) {
+							var r = Math.round(items.length*Math.random());
+							var tmp = items[r];
+							items[r] = items[i];
+							items[i] = tmp;
+						}
 					}
                     DeliciousQueue.urlCache = items;
                     DeliciousQueue.readItemFromCache();

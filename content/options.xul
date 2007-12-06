@@ -31,6 +31,7 @@
 		<radiogroup preference="sortitems">
 			<radio id="sortitemspreffilo" value="filo" label="&sortitemspreffilo.label;" />
 			<radio id="sortitemspreffifo" value="fifo" label="&sortitemspreffifo.label;" />
+			<radio id="sortitemsprefrandom" value="random" label="&sortitemsprefrandom.label;" />
 		</radiogroup>
 	</groupbox>
 	</row>
