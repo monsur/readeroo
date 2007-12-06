@@ -16,3 +16,4 @@
 <!ENTITY sortitemscaption.label "Sort items">
 <!ENTITY sortitemspreffilo.label "Latest item first">
 <!ENTITY sortitemspreffifo.label "Latest item last">
+<!ENTITY sortitemsprefrandom.label "Random">
