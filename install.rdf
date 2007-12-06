@@ -5,7 +5,7 @@
     <em:id>readeroo@monsur.com</em:id>
     <em:name>Readeroo</em:name>
     <em:description>Stores articles that you want to read later on.  Powered by del.icio.us.</em:description>
-    <em:version>0.1.20070318</em:version>
+    <em:version>0.2.20071205</em:version>
     <em:creator>Monsur Hossain</em:creator>
     <em:homepageURL>http://www.monsur.com/projects/readeroo</em:homepageURL>
     <em:aboutURL>chrome://readeroo/content/about.xul</em:aboutURL>
