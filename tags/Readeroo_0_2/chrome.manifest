@@ -1,0 +1,4 @@
+content	readeroo	content/
+locale	readeroo	en-US	locale/en-US/
+skin	readeroo	classic/1.0	skin/
+overlay	chrome://browser/content/browser.xul	chrome://readeroo/content/firefoxOverlay.xul
