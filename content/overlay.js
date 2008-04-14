@@ -73,8 +73,7 @@ Readeroo.Controller = {
     if (Readeroo.Preferences.isProcessing()) {
       return;
     }
-    Readeroo.DisplayControl.initialize('add');
-    Readeroo.DisplayControl.setProcessing(Readeroo.I18N.getString('processing'));
+    Readeroo.AddButton.setProcessing();
     Readeroo.Preferences.load();
     DocumentHelper.initialize();
     
@@ -83,22 +82,209 @@ Readeroo.Controller = {
     urlItem.url = DocumentHelper.getUrl();
     urlItem.description = DocumentHelper.getTitle();
     if (urlItem.url == '') {
-      Readeroo.DisplayControl.setError(Readeroo.I18N.getString('error'));
+      Readeroo.AddButton.setError(Readeroo.I18N.getString('error01'));
       return;
     }
     urlItem.tags.push(Readeroo.Preferences.tagtoread);
-    Readeroo.DeliciousQueue.add(urlItem);
+
+    Readeroo.DeliciousQueue.add(urlItem,
+        function(msg){
+          Readeroo.AddButton.setNormal(msg);
+        },
+        function(msg) {
+          Readeroo.AddButton.setError(msg);
+        });
   },
   
   onReadClickCommand: function(e){
     if (Readeroo.Preferences.isProcessing()) {
       return;
     }
-    Readeroo.DisplayControl.initialize('read');
-    Readeroo.DisplayControl.setProcessing(Readeroo.I18N.getString('processing'));
+    Readeroo.ReadButton.setProcessing();
     Readeroo.Preferences.load();
-    Readeroo.DeliciousQueue.read();
+    Readeroo.DeliciousQueue.read(
+        function(msg){
+          Readeroo.ReadButton.setNormal(msg);
+        },
+        function(msg) {
+          Readeroo.ReadButton.setError(msg);
+        });
+  }
+};
+
+function ReaderooButton(id, text) {
+  this.controlId = 'readeroo-button-' + id;
+  this.tooltipId = id + 'tip';
+  this.normalImage = 'chrome://readeroo/skin/' + id + '_normal.png';
+  this.processingImage = 'chrome://readeroo/skin/processing.png';
+  this.errorImage = 'chrome://readeroo/skin/error.png';
+  this.text = text;
+};
+
+ReaderooButton.prototype.set_ = function(image, tooltip) {
+  document.getElementById(this.controlId).image = image;
+  document.getElementById(this.tooltipId).label = tooltip;
+};
+
+ReaderooButton.prototype.setNormal = function(tooltip) {
+  Readeroo.Preferences.stopProcessing();
+  if (!tooltip) {
+    tooltip = this.text;
+  }
+  this.set_(this.normalImage, tooltip);
+}
+
+ReaderooButton.prototype.setProcessing = function(tooltip) {
+  Readeroo.Preferences.startProcessing();
+  if (!tooltip) {
+    tooltip = Readeroo.I18N.getString('processing');
+  }
+  this.set_(this.processingImage, tooltip);
+};
+
+ReaderooButton.prototype.setError = function(tooltip) {
+  Readeroo.Preferences.stopProcessing();
+  tooltip = Readeroo.I18N.getString('error') + ' ' + tooltip;
+  this.set_(this.errorImage, tooltip);
+}
+
+Readeroo.DeliciousQueue = {
+
+  urlCache: [],
+  currentItem: null,
+
+  add: function(urlItem, callback, errorCallback) {
+
+    // first check to see if the url already exists
+    // in delicious
+    DeliciousApi.get({url: urlItem.url},
+
+    // callback function for the Delicious API "get" call
+    // if the bookmark already exists, copying the old 
+    // values over to the new item before saving it to 
+    // delicious.
+    function(items) { 
+
+      // if the url already exists
+      if (items.length > 0) {
+
+        var oldItem = items[0];
+
+        // copy all the old values over
+        urlItem.description = oldItem.description;
+        urlItem.notes = oldItem.notes;
+
+        // copy all the tags over (except for the "toread" 
+        // and "donereading" tags)
+        for (var i = 0; i < oldItem.tags.length; i++) {
+          var currTag = oldItem.tags[i];
+          if ((currTag != Readeroo.Preferences.tagtoread) &&
+              (currTag != Readeroo.Preferences.tagdonereading))
+            urlItem.tags.push(oldItem.tags[i]);
+          }
+        }
+
+        // call the actual add function
+        DeliciousApi.add(urlItem, Readeroo.Preferences.shareditem, 
+            // callback from "add" api call.
+            // if add is successful, revert icon back to normal
+            // otherwise show error icon
+            // we are so far deep inside the rabbit hole right now!
+            function(success) {
+              if (success) {
+                // do stuff for success
+                callback();
+              } else {
+                // failure
+                errorCallback();
+              }
+            },
+            function(http) {
+              errorCallback(http.status + ' ' + http.statusText);
+            }
+        );
+      }
+    );
   },
+  
+  read: function(callback, errorCallback) {
+    // if the cache is empty, or its time to refresh the cache        
+    if ((Readeroo.DeliciousQueue.urlCache.length == 0) || 
+        (Readeroo.Preferences.refresh())) {
+     DeliciousApi.all({tag : Readeroo.Preferences.tagtoread, count : 100}, 
+        function(items) {
+          // TODO: Refactor this out
+          if (Readeroo.Preferences.sortitems == 'fifo') {
+            items.sort( function(a, b) {
+                if (a.time < b.time) return -1;
+                if (a.time > b.time) return 1;
+                return 0;
+              }
+            );
+          }
+          if (Readeroo.Preferences.sortitems == 'random') {
+            for (var i = 0; i < items.length; i++) {
+              var r = Math.round(items.length*Math.random());
+              var tmp = items[r];
+              items[r] = items[i];
+              items[i] = tmp;
+            }
+          }
+          Readeroo.DeliciousQueue.urlCache = items;
+          Readeroo.DeliciousQueue.readCallback(callback, errorCallback);
+        }, errorCallback
+      );
+    } else {
+      Readeroo.DeliciousQueue.readCallback(callback, errorCallback);
+    }
+  },
+  
+  readCallback: function(callback, errorCallback) {
+    if (Readeroo.DeliciousQueue.urlCache.length == 0) {
+      errorCallback(Readeroo.I18N.getString('noitemsleft'));
+      return;
+    }
+    Readeroo.DeliciousQueue.currentItem =
+        Readeroo.DeliciousQueue.urlCache.shift();
+
+    if (Readeroo.Preferences.deleteitem) {
+      DeliciousApi.deleteItem(Readeroo.DeliciousQueue.currentItem.url,
+          function(responseText) {
+            Readeroo.DeliciousQueue.markReadCallback(responseText, callback, 
+                errorCallback)
+          }, errorCallback
+      );
+    } else {
+      for (var i = 0; i < Readeroo.DeliciousQueue.currentItem.tags.length; 
+          i++) {
+        if (Readeroo.DeliciousQueue.currentItem.tags[i] ==
+            Readeroo.Preferences.tagtoread) {
+          Readeroo.DeliciousQueue.currentItem.tags[i] = 
+              Readeroo.Preferences.tagdonereading;
+        }
+      }
+
+      DeliciousApi.add(Readeroo.DeliciousQueue.currentItem, 
+          Readeroo.Preferences.shareditem, 
+          function(responseText) {
+            Readeroo.DeliciousQueue.markReadCallback(responseText, callback, 
+                errorCallback)
+          }, errorCallback
+      );
+    }
+  },
+  
+  markReadCallback: function(responseText, callback, errorCallback) {
+    window._content.document.location = Readeroo.DeliciousQueue.currentItem.url;
+    var tooltip = '';
+    var length = Readeroo.DeliciousQueue.urlCache.length;
+    if (length == 0) {
+      tooltip = Readeroo.I18N.getString('noitemsleft');
+    } else {
+      tooltip = length + ' ' + Readeroo.I18N.getString('itemsleft');
+    }
+    callback(tooltip);
+  }
 };
 
 Readeroo.FirstRun = {
@@ -194,195 +380,4 @@ Readeroo.FirstRun = {
   }
 };
 
-
-Readeroo.DisplayControl = {
-
-  controlId: '',
-  tooltipId: '',
-  normalImage: '',
-  processingImage: '',
-  errorImage: '',
-
-  initialize: function(id) {
-    this.controlId = 'readeroo-button-' + id;
-    this.tooltipId = id + 'tip';
-    this.normalImage =
-        'chrome://readeroo/skin/' + id + '_normal.png';
-    this.processingImage =
-        'chrome://readeroo/skin/processing.png';
-    this.errorImage = 'chrome://readeroo/skin/error.png';
-  },
-
-  set: function(image, tooltip) {
-    document.getElementById(this.controlId).image = image;
-    document.getElementById(this.tooltipId).label = tooltip;
-  },
-
-  setNormal: function(tooltip) {
-    Readeroo.Preferences.stopProcessing();
-    this.set(this.normalImage, tooltip);
-  },
-
-  setProcessing: function(tooltip) {
-    Readeroo.Preferences.startProcessing();
-    this.set(this.processingImage, 
-        tooltip);
-  },
-
-  setError: function(tooltip) {
-    Readeroo.Preferences.stopProcessing();
-    this.set(this.errorImage, tooltip);
-  }
-};
-
-Readeroo.DeliciousQueue = {
-
-  urlCache: [],
-  currentItem: null,
-
-  onLoad: function() {
-    Readeroo.DeliciousQueue.urlCache = new Array();
-  },
-
-  clear: function() {
-    Readeroo.DeliciousQueue.urlCache = new Array();
-    Readeroo.DeliciousQueue.currentItem = null;
-    Readeroo.DisplayControl.initialize('read');
-    Readeroo.DisplayControl.setNormal(Readeroo.I18N.getString('readtooltip'));
-    return false;
-  },
-
-  add: function(urlItem) {
-
-    // first check to see if the url already exists
-    // in delicious
-    DeliciousApi.get({url: urlItem.url},
-
-    // callback function for the Delicious API "get" call
-    // if the bookmark already exists, copying the old 
-    // values over to the new item before saving it to 
-    // delicious.
-    function(items) { 
-
-      // if the url already exists
-      if (items.length > 0) {
-
-        var oldItem = items[0];
-
-        // copy all the old values over
-        urlItem.description = oldItem.description;
-        urlItem.notes = oldItem.notes;
-
-        // copy all the tags over (except for the "toread" 
-        // and "donereading" tags)
-        for (var i = 0; i < oldItem.tags.length; i++) {
-          var currTag = oldItem.tags[i];
-          if ((currTag != Readeroo.Preferences.tagtoread) &&
-              (currTag != Readeroo.Preferences.tagdonereading))
-            urlItem.tags.push(oldItem.tags[i]);
-          }
-        }
-
-        // call the actual add function
-        DeliciousApi.add(urlItem, Readeroo.Preferences.shareditem, 
-            // callback from "add" api call.
-            // if add is successful, revert icon back to normal
-            // otherwise show error icon
-            // we are so far deep inside the rabbit hole right now!
-            function(success) {
-              if (success) {
-                // do stuff for success
-                Readeroo.DisplayControl.setNormal(
-                    Readeroo.I18N.getString('add'));
-              } else {
-                // failure
-                Readeroo.DisplayControl.setError(
-                    Readeroo.I18N.getString('error'));
-              }
-            }
-        );
-      }
-    );
-  },
-  
-  read: function() {
-    // if the cache is empty, or its time to refresh the cache        
-    if ((Readeroo.DeliciousQueue.urlCache.length == 0) || 
-        (Readeroo.Preferences.refresh())) {
-     DeliciousApi.all({tag : Readeroo.Preferences.tagtoread, count : 100}, 
-        function(items) {
-          // TODO: Refactor this out
-          if (Readeroo.Preferences.sortitems == 'fifo') {
-            items.sort( function(a, b) {
-                if (a.time < b.time) return -1;
-                if (a.time > b.time) return 1;
-                return 0;
-              }
-            );
-          }
-          if (Readeroo.Preferences.sortitems == 'random') {
-            for (var i = 0; i < items.length; i++) {
-              var r = Math.round(items.length*Math.random());
-              var tmp = items[r];
-              items[r] = items[i];
-              items[i] = tmp;
-            }
-          }
-          Readeroo.DeliciousQueue.urlCache = items;
-          Readeroo.DeliciousQueue.readItemFromCache();
-        }
-      );
-    } else {
-      Readeroo.DeliciousQueue.readItemFromCache();
-    }
-  },
-  
-  readItemFromCache: function() {
-    if (Readeroo.DeliciousQueue.urlCache.length == 0) {
-      Readeroo.DisplayControl.setNormal(Readeroo.I18N.getString('noitemsleft'));
-      return;
-    }
-    Readeroo.DeliciousQueue.currentItem =
-        Readeroo.DeliciousQueue.urlCache.shift();
-    Readeroo.DeliciousQueue.markRead();
-  },
-
-  markRead: function() {
-    if (Readeroo.Preferences.deleteitem) {
-      DeliciousApi.deleteItem(Readeroo.DeliciousQueue.currentItem.url,
-                   Readeroo.DeliciousQueue.markReadCallback);
-    } else {
-      for (var i = 0; i < Readeroo.DeliciousQueue.currentItem.tags.length; 
-          i++) {
-        if (Readeroo.DeliciousQueue.currentItem.tags[i] ==
-            Readeroo.Preferences.tagtoread) {
-          Readeroo.DeliciousQueue.currentItem.tags[i] = 
-              Readeroo.Preferences.tagdonereading;
-        }
-      }
-
-      DeliciousApi.add(Readeroo.DeliciousQueue.currentItem, 
-          Readeroo.Preferences.shareditem, 
-          Readeroo.DeliciousQueue.markReadCallback);
-    }
-  },
-  
-  markReadCallback: function(responseText) {
-    window._content.document.location = Readeroo.DeliciousQueue.currentItem.url;
-    var tooltip = '';
-    var length = Readeroo.DeliciousQueue.urlCache.length;
-    if (length == 0) {
-      tooltip = Readeroo.I18N.getString('noitemsleft');
-    } else {
-      tooltip = length + ' ' + Readeroo.I18N.getString('itemsleft');
-    }
-    Readeroo.DisplayControl.setNormal(tooltip);
-  }
-};
-
-window.addEventListener('load', 
-    function(e) { 
-      Readeroo.I18N.onLoad();
-      Readeroo.FirstRun.onLoad();
-    },
-false);
+window.addEventListener('load', Readeroo.onLoad, false);
