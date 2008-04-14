@@ -2,7 +2,7 @@
 <?xml-stylesheet href="chrome://readeroo/skin/overlay.css" type="text/css"?>
 <!DOCTYPE overlay SYSTEM "chrome://readeroo/locale/readeroo.dtd">
 <overlay id="readeroo-overlay" 
-  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   <script type="application/x-javascript" src="debug.js"/>
   <script type="application/x-javascript" src="urlitem.js"/>
   <script type="application/x-javascript" src="deliciousitem.js"/>
