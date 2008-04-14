@@ -1,25 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet href="chrome://readeroo/skin/overlay.css" type="text/css"?>
 <!DOCTYPE overlay SYSTEM "chrome://readeroo/locale/readeroo.dtd">
-<overlay id="readeroo-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-    <script type="application/x-javascript" src="debug.js"/>
-    <script type="application/x-javascript" src="urlitem.js"/>
-    <script type="application/x-javascript" src="deliciousitem.js"/>
-    <script type="application/x-javascript" src="helpers.js"/>
-    <script type="application/x-javascript" src="deliciousapi.js"/>
-    <script type="application/x-javascript" src="overlay.js"/>
-    <stringbundleset id="stringbundleset">
-        <stringbundle id="readeroo-strings" src="chrome://readeroo/locale/readeroo.properties"/>
-    </stringbundleset>
+<overlay id="readeroo-overlay" 
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/x-javascript" src="debug.js"/>
+  <script type="application/x-javascript" src="urlitem.js"/>
+  <script type="application/x-javascript" src="deliciousitem.js"/>
+  <script type="application/x-javascript" src="helpers.js"/>
+  <script type="application/x-javascript" src="deliciousapi.js"/>
+  <script type="application/x-javascript" src="overlay.js"/>
+  <stringbundleset id="stringbundleset">
+    <stringbundle id="readeroo-strings" 
+        src="chrome://readeroo/locale/readeroo.properties"/>
+  </stringbundleset>
 
-    <popupset id="mainPopupSet">
-        <tooltip id="addtip" label="&readeroo.addtooltip;" orient="vertical" style="background-color: #33DD00;" />
-        <tooltip id="readtip" label="&readeroo.readtooltip;" orient="vertical" style="background-color: #33DD00;" />
-    </popupset>
+  <popupset id="mainPopupSet">
+    <tooltip id="addtip" label="&readeroo.addtooltip;" orient="vertical" 
+        style="background-color: #33DD00;" />
+    <tooltip id="readtip" label="&readeroo.readtooltip;" orient="vertical" 
+        style="background-color: #33DD00;" />
+  </popupset>
 
-    <toolbarpalette id="BrowserToolbarPalette">
-        <toolbarbutton id="readeroo-button-add"  image="chrome://readeroo/skin/add_normal.png"  label="&readeroo.add;"  tooltip="addtip"  oncommand="Readeroo.Controller.onAddClickCommand(event);" />
-        <toolbarbutton id="readeroo-button-read" image="chrome://readeroo/skin/read_normal.png" label="&readeroo.read;" tooltip="readtip" oncommand="Readeroo.Controller.onReadClickCommand(event);" />
-    </toolbarpalette>
+  <toolbarpalette id="BrowserToolbarPalette">
+    <toolbarbutton id="readeroo-button-add" 
+        image="chrome://readeroo/skin/add_normal.png" label="&readeroo.add;" 
+        tooltip="addtip"  
+        oncommand="Readeroo.Controller.onAddClickCommand(event);" />
+    <toolbarbutton id="readeroo-button-read" 
+        image="chrome://readeroo/skin/read_normal.png" label="&readeroo.read;" 
+        tooltip="readtip" 
+        oncommand="Readeroo.Controller.onReadClickCommand(event);" />
+  </toolbarpalette>
 
 </overlay>
