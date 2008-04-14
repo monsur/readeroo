@@ -380,4 +380,13 @@ Readeroo.FirstRun = {
   }
 };
 
+Readeroo.onLoad = function() {
+  Readeroo.I18N.onLoad();
+  Readeroo.AddButton = new ReaderooButton('add', 
+      Readeroo.I18N.getString('add'));
+  Readeroo.ReadButton = new ReaderooButton('read', 
+      Readeroo.I18N.getString('readtooltip'));
+  Readeroo.FirstRun.onLoad();
+}
+
 window.addEventListener('load', Readeroo.onLoad, false);
