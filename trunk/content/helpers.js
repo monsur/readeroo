@@ -19,9 +19,8 @@ var WebHelper = {
         return;
       }
       if (http.status != 200) {
-        // Handle error
         if (errorCallback) {
-          errorCallback(http);
+          errorCallback(http.status + ' ' + http.statusText);
         }
         return;
       }
@@ -55,7 +54,7 @@ var WebHelper = {
 /**
  * Interacts with the browser window to retrieve and set the current url
  */
-DocumentHelper = {
+var DocumentHelper = {
 
   initialize: function() {
     var wm = Components.classes['@mozilla.org/appshell/window-mediator;1']
