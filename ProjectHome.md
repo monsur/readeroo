@@ -1,0 +1,1 @@
+In this age of email newsletters and RSS readers, we have access to enormous amounts of information. There are few tools to help manage this information. Readeroo is a simple Firefox plugin that lets you "queue up" articles you might not have the time to read now, and then access them later (the name comes from "Reader" and "Queue"). It is powered by del.icio.us.
